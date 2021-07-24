@@ -9,6 +9,10 @@ pragma solidity >=0.6.0 <0.9.0;
 // If there is an error, explain in detail why there is an error and how one might fix the error
 // Do not actually code any solutions. Only comment how to fix each error in a short paragraph
 
+// withdraw function could be attacked. It calls the anonymous fallback function on msg.sender.
+// The caller would then call the function again, hence the reentrancy attack.
+// To fix this, I'll add bool-type variable to lock and modifier to check it.
+// This modifier should be called in withdraw function
 contract A {
   uint256 public constant WITHDRAWAL_LIMIT = 1 ether;
   mapping(address => uint256) public lastWithdrawTime;
@@ -29,6 +33,10 @@ contract A {
   }
 }
 
+// Both functions of this contract uses this.balance and logic depends on this.balance. This value could be changed by
+// other oeprations (send ether to contract), so attacker always could be winner or in other case, this contract logic
+// don't work correctly.
+// To prevent this, we need to track balance changes by contract functions only.
 contract B {
   uint256 public targetAmount = 7 ether;
   address public winner;
@@ -55,6 +63,8 @@ contract C1 {
   }
 }
 
+// Contract C1 and C2 is simple usage of proxy, but in C1 is stateful, An attacker could be owner of C1 and manage the contract itself.
+// To avoid this, make the C1 contract as library. Because library is non-stateful.
 contract C2 {
   address public owner;
   C1 public c1;
@@ -69,6 +79,10 @@ contract C2 {
   }
 }
 
+// The problem is using tx.origin
+// If the attacker define interface of the contract D and call the transfer method, tx.origin is owner address.
+// So, don't use tx.origin for authorization.
+// Use msg.sender instead.
 contract D {
   address public owner;
 
@@ -83,6 +97,9 @@ contract D {
   }
 }
 
+// Same signature can be used multiple times to execute a function.
+// This can be harmful if the signer's intention was to approve a transaction once.
+// To prevent, we can use nonce as a parameter of transfer and getTxHash function.
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 
 contract E {

@@ -8,6 +8,14 @@ require("dotenv").config();
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",
+  networks: {
+    hardhat: {
+      forking: {
+        url: "",
+        blockNumber: 12859658,
+      }
+    }
+  },
   solidity: {
     compilers: [
       {

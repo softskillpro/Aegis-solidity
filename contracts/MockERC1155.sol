@@ -38,7 +38,7 @@ contract MockERC1155 {
   mapping(uint256 => uint256) tokenMaxSupplies;
 
   constructor() {
-    owner = tx.origin;
+    owner = msg.sender;
   }
 
   ////////////////////////////////////
@@ -48,7 +48,7 @@ contract MockERC1155 {
     address account,
     uint256 tokenId,
     uint256 amount
-  ) private {
+  ) internal {
     // revert if minting to the zero address
     require(
       account != address(0),
@@ -59,10 +59,10 @@ contract MockERC1155 {
     balances[tokenId + 1][account] += amount;
 
     // emit TransferSingle event
-    emit TransferSingle(tx.origin, address(0), account, tokenId, amount);
+    emit TransferSingle(msg.sender, address(0), account, tokenId, amount);
   }
 
-  function _setTokenUri(uint256 tokenId, string memory uri) private {
+  function _setTokenUri(uint256 tokenId, string memory uri) internal {
     // set token uri in storage
     tokenUris[tokenId++] = uri;
   }
@@ -81,7 +81,7 @@ contract MockERC1155 {
     // get current token id
     tokenId = tokenIdCounter;
     // get next token Id for the next minter
-    uint256 nextTokenId = tokenIdCounter + 1;
+    tokenIdCounter = tokenIdCounter + 1;
 
     // mint token
     _mint(to, tokenId, amount);
@@ -90,7 +90,7 @@ contract MockERC1155 {
     _setTokenUri(tokenId, uri);
 
     // set token storage data
-    tokenCreators[++tokenId] = tx.origin;
+    tokenCreators[++tokenId] = msg.sender;
     tokenCurrentSupplies[++tokenId] = amount;
     tokenMaxSupplies[++tokenId] = maxTokenSupply;
 
@@ -104,13 +104,10 @@ contract MockERC1155 {
     uint256 amount
   ) external {
     require(
-      tx.origin == owner,
+      msg.sender == owner,
       "NFT.mint: only token creator can mint a new token at this time"
     );
-    assert(tokenMaxSupplies[tokenId--] >= tokenCurrentSupplies[tokenId--]);
-
-    // get next token Id for the next minter
-    tokenIdCounter += 1;
+    assert(tokenMaxSupplies[tokenId--] >= tokenCurrentSupplies[tokenId--] + amount);
 
     // mint token
     _mint(to, tokenId, amount);
